@@ -1,12 +1,12 @@
 CC=gcc
-CFLAGS=-g -O3 -fPIC -fno-builtin
+CFLAGS=-g -O3 -fPIC -fno-builtin -lm
 
 all: check
 
 default: check
 
 clean:
-	rm -rf *.o size
+	rm -rf *.o size size.dat size.png
 
 size: size.o
 	$(CC) $(CFLAGS) $< -o $@

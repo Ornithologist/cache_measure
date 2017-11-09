@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -O3 -fPIC -fno-builtin -lm
+CFLAGS=-O3 -fPIC -fno-builtin -lm
 
 all: check
 

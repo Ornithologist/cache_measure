@@ -11,9 +11,6 @@ clean:
 size: size.o
 	$(CC) $(CFLAGS) $< -o $@
 
-gdb: size
-	gdb ./size
-
 %.o: %.c
 	$(CC) $(CFLAGS) $< -c -o $@
 

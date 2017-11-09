@@ -8,23 +8,15 @@
 
 #define BILLION 1000000000L
 #define BASE 2
-#define REPEAT 16777216  // 2 ^ 24, just a bit number
 #define SIZE_ORDER 18  // 256 MiB, max size of the array
-#define MIN_ARRAY_SIZE 128  // 1 KiB if sizeof(double) = 8
+#define MIN_ARRAY_SIZE 256  // 1 KiB if sizeof(int) = 4
 #define STRIDE 8
 #define GNU_CMDS 6
-#define REGURGITATE 10
-#define TIME_TO_ORDER(time) (int)((log(time) / log(BASE)) + 1)
+#define REGURGITATE 16
 
-struct time_in {
-    unsigned long long timens;
-    int accessc;
-};
-
-void setup_array(int n, int s, double *array);
 int timer(int n, int s);
-int timer_outer(int n, int s);
-struct time_in timer_inner(int n, int s);
+
+int REPEAT = 16777216;  // just a big number
 
 int main(int argc, char **argv)
 {
@@ -42,10 +34,8 @@ int main(int argc, char **argv)
 
     // calculate
     for (i = 0; i < SIZE_ORDER; i++) {
-        int order, array_size = MIN_ARRAY_SIZE * (1 << i);
+        int array_size = MIN_ARRAY_SIZE * (1 << i);
         time_ns = timer(array_size, STRIDE);
-        printf("%d: %d ns\n", i, time_ns);
-        order = (time_ns <= 0) ? 1 : TIME_TO_ORDER(time_ns);
         fprintf(temp, "%d: %d \n", i, time_ns);
     }
 
@@ -61,56 +51,34 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void setup_array(int n, int s, double *array)
+void setup_array(int n, int s, int *array)
 {
     int i;
     for (i = 0; i < n; i++) {
-        array[i] = 1.0;
+        array[i] = 1;
     }
 }
 
-struct time_in timer_inner(int n, int s)
+int timer_inner(int n, int s)
 {
-    int out, i, p = 0;
-    double *array = (double *)malloc(sizeof(double) * n);
-    struct time_in curtime = {0, 0};
+    int out, i, nmask = n - 1;
+    int *array = (int *)malloc(sizeof(int) * n);
+    unsigned long long diff;
+    struct timespec start, end;
 
     // touch evefything for once to warm up
     setup_array(n, s, array);
 
-    unsigned long long diff;
-    struct timespec start, end;
-
-    // measure access for ceil(n / s) times
+    // measure access for REPEAT times
     clock_gettime(CLOCK_MONOTONIC, &start);
-    while (p < n) {
-        array[p] *= 2.0;
-        i++;
-        p += s;
+    for (i = 0; i < REPEAT; i++) {
+        ++array[(i * s) & nmask];
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
-
     diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-    curtime.timens = diff;
-    curtime.accessc = i;
+    out = (int)(diff / 1000);
 
     free(array);
-    return curtime;
-}
-
-int timer_outer(int n, int s)
-{
-    int access_count = 0;
-    unsigned long long total_time = 0;
-
-    while (access_count < REPEAT) {
-        struct time_in curtime = timer_inner(n, s);
-        access_count += curtime.accessc;
-        total_time += curtime.timens;
-    }
-
-    int out = (int)((1000 * total_time) / access_count);
-    printf("out: %d, access_count: %d\n", out, access_count);
     return out;
 }
 
@@ -119,7 +87,7 @@ int timer(int n, int s)
     int i, cur = 0, best = 0;
 
     for (i = 0; i < REGURGITATE; i++) {
-        cur += timer_outer(n, s);
+        cur = timer_inner(n, s);
         if (best == 0 || cur < best) {
             best = cur;
         }

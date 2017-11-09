@@ -28,17 +28,17 @@ _STRIDE_ value is fixed to 8 in the program. Therefore the program can only be u
 
 ## HOW TO MEASURE
 
-*size.png* is a sample performance graph taken from a MacBook Pro (late 2017).
+*example2.png* is a sample performance graph taken from a server.
 
 The X axis is the base 2 logarithm value of _N / 256_, where 256 is an arbitrary number so that on a system where integer size is 4 bytes, the smallest array size would be 1kB. The Y axis is the access time _T_ in microseconds.
 
-The first steep increase happens when X is 9. The size of array therefore is 2 ^ 9 * 1kB = 512kB.
+The first steep increase happens when X is 5. The size of array therefore is 2 ^ 5 * 1kB = 32kB.
 
-The second steep increase happens when X is 12. The corresponding array size is 4MB.
+The second steep increase happens when X is 8. The corresponding array size is 256kB.
 
-The third steep increase happens when X is 16. The corresponding array size is 64MB.
+The third steep increase happens when X is 14. The corresponding array size is 16MB.
 
-Therefore, the 3 levels of caches are 512kB, 4MB, and 64MB.
+Therefore, the 3 levels of caches are 32kB, 256kB, and 16MB.
 
 ## LIMITATIONS AND OUTLOOK
 

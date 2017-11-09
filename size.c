@@ -9,9 +9,9 @@
 #define BILLION 1000000000L
 #define BASE 2
 #define REPEAT 16777216  // 2 ^ 24, just a bit number
-#define SIZE_ORDER 16  // 512 MiB, max size of the array
+#define SIZE_ORDER 18  // 256 MiB, max size of the array
 #define MIN_ARRAY_SIZE 128  // 1 KiB if sizeof(double) = 8
-#define STRIDE 1
+#define STRIDE 8
 #define GNU_CMDS 6
 #define REGURGITATE 10
 #define TIME_TO_ORDER(time) (int)((log(time) / log(BASE)) + 1)
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
         "set output \"size.png\"",
         "set style line 1 lc rgb '#0060ad' lt 1 lw 2 pt 7 pi -1 ps 1.5",
         "set pointintervalbox 3",
-        "set title \"X Axis: access time | Y Axis: order of array "
+        "set title \"Y Axis: access time | X Axis: order of array "
         "size",
         "plot 'size.dat' with linespoints ls 1"};
 
@@ -81,13 +81,14 @@ struct time_in timer_inner(int n, int s)
     unsigned long long diff;
     struct timespec start, end;
 
-    clock_gettime(CLOCK_MONOTONIC, &start); /* mark start time */
+    // measure access for ceil(n / s) times
+    clock_gettime(CLOCK_MONOTONIC, &start);
     while (p < n) {
-        array[p] *= 1.5;
+        array[p] *= 2.0;
         i++;
         p += s;
     }
-    clock_gettime(CLOCK_MONOTONIC, &end);   /* mark the end time */
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
     diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
     curtime.timens = diff;
@@ -115,15 +116,14 @@ int timer_outer(int n, int s)
 
 int timer(int n, int s)
 {
-    int i, total = 0;
+    int i, cur = 0, best = 0;
 
     for (i = 0; i < REGURGITATE; i++) {
-        total += timer_outer(n, s);
-        // if (best == 0 || cur < best) {
-        //     best = cur;
-        // }
+        cur += timer_outer(n, s);
+        if (best == 0 || cur < best) {
+            best = cur;
+        }
     }
 
-    total /= REGURGITATE;
-    return total;
+    return best;
 }
